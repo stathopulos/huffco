@@ -1,72 +1,68 @@
 use std::collections::{BinaryHeap, HashMap};
 
-#[derive(Debug)]
-enum HuffmanTree<T> {
-    Leaf(T),
-    Fork(Box<HuffmanTree<T>>, Box<HuffmanTree<T>>),
-}
-// From [T] | [T * F] where T: Eq + probably Hash, F: Ord + maybe Num
-impl<T> HuffmanTree<T> {}
+use display_tree::{DisplayTree, print_tree};
 
-#[derive(Debug)]
-struct FrequencyPair<T, F: Ord> {
-    symbol: T,
-    freq: F,
+#[derive(Debug, Ord, PartialOrd, PartialEq, Eq, DisplayTree)]
+enum HuffmanTree {
+    Leaf(char),
+    Fork(#[tree] Box<HuffmanTree>, #[tree] Box<HuffmanTree>),
 }
 
-impl<T, F> Ord for FrequencyPair<T, F>
-where
-    F: Ord,
-{
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.freq.cmp(&other.freq).reverse()
+impl HuffmanTree {
+    /// Convenience function for creating a fork from two nodes
+    fn fork(a: HuffmanTree, b: HuffmanTree) -> HuffmanTree {
+        HuffmanTree::Fork(Box::new(a), Box::new(b))
+    }
+    /// Generate a Huffman tree from a string slice
+    fn tree(string: &str) -> Option<HuffmanTree> {
+        let mut frequency_map = HashMap::new();
+
+        for c in string.chars() {
+            frequency_map
+                .entry(c)
+                .and_modify(|count: &mut u32| *count = count.saturating_add(1))
+                .or_insert(1);
+        }
+
+        let mut p_queue: BinaryHeap<_> = frequency_map
+            .into_iter()
+            .map(|(symbol, freq)| FrequencyPair(freq, HuffmanTree::Leaf(symbol)))
+            .collect();
+
+        while let Some(FrequencyPair(fa, a)) = p_queue.pop() {
+            if let Some(FrequencyPair(fb, b)) = p_queue.pop() {
+                p_queue.push(FrequencyPair(
+                    fa.saturating_add(fb),
+                    HuffmanTree::fork(a, b),
+                ));
+            } else {
+                return Some(a);
+            }
+        }
+        None
     }
 }
 
-impl<T, F> PartialOrd for FrequencyPair<T, F>
-where
-    F: Ord,
-{
+#[derive(PartialEq, Eq)]
+struct FrequencyPair(u32, HuffmanTree);
+
+/// Order by frequency in reverse order for min-queue, then by character for reproducibility
+impl Ord for FrequencyPair {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0).reverse().then(self.1.cmp(&other.1))
+    }
+}
+
+impl PartialOrd for FrequencyPair {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T, F> PartialEq for FrequencyPair<T, F>
-where
-    F: Ord,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.freq == other.freq
-    }
-}
-
-impl<T, F> Eq for FrequencyPair<T, F> where F: Ord {}
-
 fn main() {
-    let test_string = "Huffman for fun";
-    let mut frequency_map = HashMap::new();
+    let s = "Huffman for fun!";
+    let t = HuffmanTree::tree(s).unwrap();
 
-    for c in test_string.chars() {
-        frequency_map
-            .entry(c)
-            .and_modify(|count: &mut u32| *count = count.saturating_add(1))
-            .or_insert(1);
-    }
-    println!("{:?}", frequency_map);
-
-    let mut p_queue: BinaryHeap<_> = frequency_map
-        .into_iter()
-        .map(|(symbol, freq)| FrequencyPair { symbol, freq })
-        .collect();
-
-    while let Some(i) = p_queue.pop() {
-        println!("{:?}", i);
-    }
-
-    let ha = HuffmanTree::Leaf('a');
-    let hb = HuffmanTree::Leaf('b');
-
-    let h = HuffmanTree::Fork(Box::new(ha), Box::new(hb));
-    println!("{:?}", h);
+    println!("string: {s}");
+    print_tree!(t);
 }
