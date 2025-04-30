@@ -2,7 +2,7 @@ use bitvec::vec::BitVec;
 use display_tree::{DisplayTree, println_tree};
 use std::collections::{BinaryHeap, HashMap};
 
-#[derive(Debug, Ord, PartialOrd, PartialEq, Eq, DisplayTree)]
+#[derive(Ord, PartialOrd, PartialEq, Eq, DisplayTree)]
 enum HuffmanTree {
     Leaf(char),
     Fork(#[tree] Box<HuffmanTree>, #[tree] Box<HuffmanTree>),
@@ -32,7 +32,7 @@ impl HuffmanTree {
         while let Some(FrequencyPair(fa, a)) = p_queue.pop() {
             if let Some(FrequencyPair(fb, b)) = p_queue.pop() {
                 p_queue.push(FrequencyPair(
-                    fa.saturating_add(fb),
+                    fa.saturating_add(fb), // If for some reason the integer overflows it's more useful to limit than wrap
                     HuffmanTree::fork(a, b),
                 ));
             } else {
@@ -69,6 +69,32 @@ impl HuffmanTree {
     fn enc(&self, string: &str) -> BitVec {
         string.chars().flat_map(|c| self.enc_char(c)).collect()
     }
+    fn desc_tree(&self, bit: bool) -> &Self {
+        match self {
+            Self::Fork(a, b) => {
+                if bit {
+                    b.as_ref()
+                } else {
+                    a.as_ref()
+                }
+            }
+            Self::Leaf(_) => self,
+        }
+    }
+    fn dec(&self, bv: BitVec) -> String {
+        let mut cv = String::new();
+        let mut node = self;
+        for i in bv {
+            match node.desc_tree(i) {
+                Self::Leaf(c) => {
+                    cv.push(*c);
+                    node = self;
+                }
+                fork @ Self::Fork(..) => node = fork,
+            }
+        }
+        cv
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -90,8 +116,10 @@ impl PartialOrd for FrequencyPair {
 fn main() {
     let s = "Huffman for fun";
     let t = HuffmanTree::tree(s).unwrap();
+    let e = t.enc(s);
 
     println_tree!(t);
     println!("string: \"{s}\"");
-    println!("encoded: {}", t.enc(s));
+    println!("encoded: {e:b}",);
+    println!("decoded: \"{}\"", t.dec(e));
 }
