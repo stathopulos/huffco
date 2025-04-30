@@ -1,6 +1,6 @@
+use bitvec::vec::BitVec;
+use display_tree::{DisplayTree, println_tree};
 use std::collections::{BinaryHeap, HashMap};
-
-use display_tree::{DisplayTree, print_tree};
 
 #[derive(Debug, Ord, PartialOrd, PartialEq, Eq, DisplayTree)]
 enum HuffmanTree {
@@ -41,6 +41,34 @@ impl HuffmanTree {
         }
         None
     }
+    fn enc_char(&self, ch: char) -> BitVec {
+        // let bv = BitVec::new();
+        let mut vv = Vec::new();
+        let bv = BitVec::new();
+        vv.push((self, bv.clone()));
+        while let Some((node, result)) = vv.pop() {
+            match node {
+                Self::Leaf(c) => {
+                    if *c == ch {
+                        return result;
+                    }
+                }
+                Self::Fork(a, b) => {
+                    let mut left = result.clone();
+                    left.push(false);
+                    vv.push((a, left));
+
+                    let mut right = result.clone();
+                    right.push(true);
+                    vv.push((b, right));
+                }
+            }
+        }
+        bv
+    }
+    fn enc(&self, string: &str) -> BitVec {
+        string.chars().flat_map(|c| self.enc_char(c)).collect()
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -60,9 +88,10 @@ impl PartialOrd for FrequencyPair {
 }
 
 fn main() {
-    let s = "Huffman for fun!";
+    let s = "Huffman for fun";
     let t = HuffmanTree::tree(s).unwrap();
 
-    println!("string: {s}");
-    print_tree!(t);
+    println_tree!(t);
+    println!("string: \"{s}\"");
+    println!("encoded: {}", t.enc(s));
 }
