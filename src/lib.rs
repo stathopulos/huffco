@@ -36,7 +36,10 @@ impl HuffmanTree {
                     HuffmanTree::fork(a, b),
                 ));
             } else {
-                return Some(a);
+                return match a {
+                    Self::Leaf(_) => Some(Self::fork(a, Self::Leaf(char::default()))), // Trees for a single character still need a root node
+                    Self::Fork(..) => Some(a),
+                };
             }
         }
         None
