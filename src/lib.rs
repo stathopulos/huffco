@@ -10,30 +10,30 @@ pub enum HuffmanTree {
 
 impl HuffmanTree {
     /// Convenience function for creating a `Fork` from two nodes
-    fn fork(a: HuffmanTree, b: HuffmanTree) -> HuffmanTree {
-        HuffmanTree::Fork(Box::new(a), Box::new(b))
+    fn fork(a: Self, b: Self) -> Self {
+        Self::Fork(Box::new(a), Box::new(b))
     }
-    /// Generate a `HuffmanTree` from a string slice by counting the occurence of each character
-    pub fn tree(string: &str) -> Option<HuffmanTree> {
+    /// Generate a `HuffmanTree` from a string slice by counting the occurence of each character. Returns None if string is empty.
+    pub fn tree(string: &str) -> Option<Self> {
         let mut frequency_map = HashMap::new();
 
         for c in string.chars() {
             frequency_map
                 .entry(c)
-                .and_modify(|count: &mut u32| *count = count.saturating_add(1)) // If for some reason the integer overflows it's more useful to limit than wrap
+                .and_modify(|count| *count += 1)
                 .or_insert(1);
         }
 
         let mut p_queue: BinaryHeap<_> = frequency_map
             .into_iter()
-            .map(|(symbol, freq)| FrequencyPair(freq, HuffmanTree::Leaf(symbol)))
+            .map(|(symbol, freq)| FrequencyPair(freq, Self::Leaf(symbol)))
             .collect();
 
         while let Some(FrequencyPair(fa, a)) = p_queue.pop() {
             if let Some(FrequencyPair(fb, b)) = p_queue.pop() {
                 p_queue.push(FrequencyPair(
                     fa.saturating_add(fb), // If for some reason the integer overflows it's more useful to limit than wrap
-                    HuffmanTree::fork(a, b),
+                    Self::fork(a, b),
                 ));
             } else {
                 return match a {
