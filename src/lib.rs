@@ -43,27 +43,24 @@ impl HuffmanTree {
     }
     /// Convenience function for encoding a single character
     fn enc_char(&self, ch: char) -> BitVec {
-        let mut stack = Vec::new();
-        let bv = BitVec::new();
-        stack.push((self, bv.clone()));
-        while let Some((node, result)) = stack.pop() {
-            match node {
-                Self::Leaf(c) => {
-                    if *c == ch {
-                        return result;
+        fn aux(tree: &HuffmanTree, ch: char, bv: &mut BitVec) -> bool {
+            match tree {
+                HuffmanTree::Leaf(c) => *c == ch,
+                HuffmanTree::Fork(left, right) => {
+                    if aux(left, ch, bv) {
+                        bv.push(false);
+                        return true;
+                    } else if aux(right, ch, bv) {
+                        bv.push(true);
+                        return true;
                     }
-                }
-                Self::Fork(a, b) => {
-                    let mut left = result.clone();
-                    left.push(false);
-                    stack.push((a, left));
-
-                    let mut right = result.clone();
-                    right.push(true);
-                    stack.push((b, right));
+                    false
                 }
             }
         }
+        let mut bv = BitVec::new();
+        aux(self, ch, &mut bv);
+        bv.reverse();
         bv
     }
     /// Use tree to encode a string to a `BitVec`
