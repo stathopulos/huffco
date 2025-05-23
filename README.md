@@ -34,13 +34,13 @@ Number of bits compressed: 18
 ```
 
 ## Benchmarking
-In my testing, the program runs correctly and in a reasonable enough time for inputs smaller than the max argument size (1048576 chars on my system). Testing I did with some large plain-text files under 1MB on my system showed the maximum runtime to be just over 2 seconds, which I'm comfortable with given this is a program intended for demonstration, not compressing large amounts of data
-- an 852kb comma-separated log file of numeric values with a header:  
-`940.2 ms ±  5.1 ms`
+In my testing, the program runs correctly and in a reasonable time for inputs smaller than the max argument size (1048576 chars on my system). Testing I did with some large plain-text files under 1MB on my system showed the maximum runtime to be just over 200 ms, which I'm more than happy with given this is a program intended for demonstration, not compressing large amounts of data.
+- an 852kb comma-separated log file of numeric values with a text header:  
+`139.8 ms ±   0.8 ms`
 - a random 899kb js file I pulled from some local Excel system files:  
-`2.243 s ±  0.026 s`
+`212.5 ms ±   0.8 ms`
 
 ## Dependencies
 This project uses only two small dependencies, neither of which is entirely necessary, but they're both nice to have:
-- `bitvec` provides a growable collection of bits as a drop-in alternative to the standard library's `Vec<bool>`
+- `bitvec` provides a growable collection of bits as a drop-in alternative to the standard library's `Vec<bool>` while implementing the Binary trait which lets us print with minimal effort
 - `display-tree` provides a convenient derive macro and the `print_tree` function for printing tree structures to stdout with minimal effort
